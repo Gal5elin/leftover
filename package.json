@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "pnpm -r --parallel run dev",
     "build": "pnpm -r build",
+    "package:deploy": "node scripts/package-deploy.mjs",
     "lint": "pnpm -r lint",
     "test": "pnpm -r test",
     "test:cov": "pnpm -r test:cov",

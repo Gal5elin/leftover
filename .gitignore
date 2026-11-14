@@ -6,6 +6,7 @@ build/
 .output/
 .vite/
 coverage/
+.artifacts/
 
 .env
 .env.*
