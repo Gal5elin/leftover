@@ -8,7 +8,7 @@
   import { householdApi } from '../../api/household.api.js';
   import { mapHouseholdError } from '../../api/household-errors.js';
   import { HOUSEHOLDS_DEPENDENCY, householdPath } from '../../lib/household-routes.js';
-  import { createHouseholdSchema, HOUSEHOLD_NAME_MAX_LENGTH } from '../../validations/household.js';
+  import { createHouseholdSchema } from '../../validations/household.js';
 
   let {
     id = 'household-name',

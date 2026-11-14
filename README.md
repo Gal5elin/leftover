@@ -1,17 +1,19 @@
 # Leftover
 
+[![CI/CD](https://github.com/Gal5elin/leftover/actions/workflows/ci-cd.yml/badge.svg?branch=main)](https://github.com/Gal5elin/leftover/actions/workflows/ci-cd.yml)
+
 Leftover je spletna aplikacija za upravljanje živil v gospodinjstvu, načrtovanje obrokov in zmanjševanje količine zavržene hrane. Uporabniki v skupnem gospodinjstvu spremljajo zalogo živil in roke uporabe, prejemajo opozorila o živilih, ki jim kmalu poteče rok, načrtujejo obroke za prihodnje dni in iz manjkajočih sestavin samodejno dobijo nakupovalni seznam. Ko je obrok pripravljen, se porabljene količine samodejno odštejejo od zaloge.
 
 ## Tehnologije
 
-| Del             | Tehnologije                                    |
-| --------------- | ---------------------------------------------- |
-| Frontend        | Svelte (SvelteKit), TypeScript, Vite           |
-| Backend         | Node.js, NestJS, TypeScript, Swagger / OpenAPI |
-| Podatkovna baza | PostgreSQL, TypeORM                            |
-| Avtentikacija   | JWT, Passport, bcrypt                          |
-| Razvoj          | Docker, Docker Compose, ESLint, Prettier       |
-| Testiranje      | Playwright (E2E in API testi)                  |
+| Del             | Tehnologije                                                           |
+| --------------- | --------------------------------------------------------------------- |
+| Frontend        | Svelte (SvelteKit), TypeScript, Vite                                  |
+| Backend         | Node.js, NestJS, TypeScript, Swagger / OpenAPI                        |
+| Podatkovna baza | PostgreSQL, TypeORM                                                   |
+| Avtentikacija   | JWT, Passport, bcrypt                                                 |
+| Razvoj          | Docker, Docker Compose, ESLint (frontend), Oxlint (backend), Prettier |
+| Testiranje      | Vitest, pokritost z V8                                                |
 
 ## Struktura repozitorija
 
@@ -39,6 +41,67 @@ pnpm migration:generate libs/db/migrations/<imeMigracije>
 pnpm migration:run
 pnpm migration:revert
 ```
+
+## CI/CD
+
+Spremembe razvijamo v ločenih vejah in jih združujemo prek pull requestov v `main`
+v repozitoriju **Gal5elin/leftover**.
+
+Workflow [ci-cd.yml](.github/workflows/ci-cd.yml) se sproži ob pull requestu v `main`
+in ob pushu na `main`. Vzporedno izvede:
+
+- **lint**: ESLint in Svelte/TypeScript preverjanje frontenda ter Oxlint za backend;
+- **build**: gradnjo obeh aplikacij in shranjevanje artefaktov `frontend-build`
+  (`frontend/build/`) ter `backend-build` (`backend/dist/`);
+- **test**: 46 enotskih testov (22 frontend, 24 backend) ter poročili HTML/LCOV v artefaktu
+  `coverage`. Padec testa ali prenizka pokritost preverjanih modulov povzroči padec joba.
+
+Odvisnosti se namestijo s `pnpm install --frozen-lockfile`; pnpm store se predpomni
+z `actions/setup-node`. Artefakti so na voljo pri posameznem zagonu v zavihku Actions.
+
+Lokalno preverjanje:
+
+```bash
+pnpm lint
+pnpm test:cov
+pnpm build
+```
+
+Pokritost se meri za izbrane module poslovne logike (roki uporabe, zaloga,
+nakupovalni seznam) in validacije obrazcev, ne za celotno aplikacijo.
+Minimalne meje teh modulov so 90 % vrstic, stavkov in funkcij ter 85 % vej.
+
+### Nastavitve forka
+
+1. V [Actions](https://github.com/Gal5elin/leftover/actions) omogoči GitHub Actions,
+   če še niso omogočene.
+2. Po prvem zagonu workflowa v Settings → Branches zaščiti `main`: vklopi
+   **Require a pull request before merging** in **Require status checks to pass
+   before merging**, izberi `lint`, `build`, `test` ter zahtevaj posodobljeno vejo.
+   Onemogoči obhod pravil, tudi za administratorje.
+
+Primer padca in popravka je v [PR #2](https://github.com/Gal5elin/leftover/pull/2):
+commit `32d2bcb` vsebuje namerno neuporabljeno spremenljivko.
+[Prvi zagon](https://github.com/Gal5elin/leftover/actions/runs/43627114262)
+je zato padel pri jobu `lint`; naslednji commit začasno datoteko odstrani.
+To potrjuje zaznavanje napake v CI. Blokado združevanja zagotovi šele zgornja
+nastavitev zaščite veje.
+
+### Namestitev
+
+Javna namestitev je po dogovoru za zdaj odložena, zato javni URL in job `deploy`
+še nista nastavljena. Lokalna aplikacija je na http://localhost:5173.
+
+Frontend uporablja Node adapter; paket `frontend-build` se zažene z
+`node build/index.js`, backend pa z `node dist/src/main.js` ob nameščenih
+produkcijskih odvisnostih. Pred gradnjo nastavi repozitorijsko spremenljivko
+`API_URL` na javni URL backenda; privzeta vrednost je `http://localhost:3000`.
+
+Za dokončanje namestitve bo treba izbrati gostovanje in PostgreSQL, ustvariti
+okolje `production` in njegove GitHub Secrets, dodati job `deploy` z
+`needs: [lint, build, test]` in pogojem za push na `main`, prenesti artefakte
+z `actions/download-artifact` ter jih namestiti brez ponovne gradnje.
+Nato se tukaj doda dejanski javni URL aplikacije.
 
 ## Dokumentacija
 
