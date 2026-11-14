@@ -11,7 +11,7 @@ permissions:
 
 concurrency:
   group: ci-${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   lint:
@@ -40,17 +40,61 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm build
         env:
-          API_URL: ${{ vars.API_URL || 'http://localhost:3000' }}
+          API_URL: https://backend-production-723376ef.up.railway.app
+          APP_REVISION: ${{ github.sha }}
+      - run: pnpm package:deploy
       - uses: actions/upload-artifact@v4
         with:
           name: frontend-build
-          path: frontend/build/
+          path: .artifacts/frontend/
+          include-hidden-files: true
           if-no-files-found: error
       - uses: actions/upload-artifact@v4
         with:
           name: backend-build
-          path: backend/dist/
+          path: .artifacts/backend/
+          include-hidden-files: true
           if-no-files-found: error
+
+  deploy:
+    needs: [lint, build, test]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    environment:
+      name: production
+      url: https://frontend-production-774ef93f.up.railway.app
+    concurrency:
+      group: production-deploy
+      cancel-in-progress: false
+    env:
+      BACKEND_URL: https://backend-production-723376ef.up.railway.app
+      FRONTEND_URL: https://frontend-production-774ef93f.up.railway.app
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - uses: actions/download-artifact@v4
+        with:
+          name: backend-build
+          path: deployment/backend
+      - uses: actions/download-artifact@v4
+        with:
+          name: frontend-build
+          path: deployment/frontend
+      - name: Install Railway CLI
+        run: npm install --global @railway/cli@5.74.0
+      - name: Deploy backend artifact
+        run: railway up deployment/backend --path-as-root --no-gitignore --service backend --environment production --ci
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+      - name: Deploy frontend artifact
+        run: railway up deployment/frontend --path-as-root --no-gitignore --service frontend --environment production --ci
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+      - name: Verify deployed release
+        run: node scripts/verify-deploy.mjs
 
   test:
     runs-on: ubuntu-latest

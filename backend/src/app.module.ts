@@ -7,8 +7,10 @@ import { HouseholdInvitationModule } from './modules/household-invitation/househ
 import { FoodItemModule } from './modules/food-item/food-item.module.js';
 import { PlannedMealModule } from './modules/planned-meal/planned-meal.module.js';
 import { ShoppingItemModule } from './modules/shopping-item/shopping-item.module.js';
+import { HealthController } from './health.controller.js';
 
 @Module({
+  controllers: [HealthController],
   imports: [
     ConfigModule.forRoot({ isGlobal: true, envFilePath: '../.env' }),
     DbConfigModule,

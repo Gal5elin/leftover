@@ -1,6 +1,11 @@
 import { defineEnvVars } from '@sveltejs/kit/env';
 
 export const variables = defineEnvVars({
+  APP_REVISION: {
+    static: true,
+    description: 'Git commit deployed by CI',
+    schema: (value) => value || 'development',
+  },
   API_URL: {
     public: true,
     static: true,
