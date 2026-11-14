@@ -53,7 +53,7 @@ in ob pushu na `main`. Vzporedno izvede:
 - **lint**: ESLint in Svelte/TypeScript preverjanje frontenda ter Oxlint za backend;
 - **build**: gradnjo obeh aplikacij in shranjevanje artefaktov `frontend-build`
   (`frontend/build/`) ter `backend-build` (`backend/dist/`);
-- **test**: enotske teste frontenda in backenda ter poročili HTML/LCOV v artefaktu
+- **test**: 46 enotskih testov (22 frontend, 24 backend) ter poročili HTML/LCOV v artefaktu
   `coverage`. Padec testa ali prenizka pokritost preverjanih modulov povzroči padec joba.
 
 Odvisnosti se namestijo s `pnpm install --frozen-lockfile`; pnpm store se predpomni
@@ -79,9 +79,13 @@ Minimalne meje teh modulov so 90 % vrstic, stavkov in funkcij ter 85 % vej.
    **Require a pull request before merging** in **Require status checks to pass
    before merging**, izberi `lint`, `build`, `test` ter zahtevaj posodobljeno vejo.
    Onemogoči obhod pravil, tudi za administratorje.
-3. Preveri zaščito s pull requestom, v katerem namerno pokvariš test ali dodaš
-   neuporabljeno spremenljivko v frontend. Po neuspešnem zagonu napako odpravi
-   v istem PR-ju in preveri, da so vsi trije jobi uspešni.
+
+Primer padca in popravka je v [PR #2](https://github.com/Gal5elin/leftover/pull/2):
+commit `32d2bcb` vsebuje namerno neuporabljeno spremenljivko.
+[Prvi zagon](https://github.com/Gal5elin/leftover/actions/runs/43627114262)
+je zato padel pri jobu `lint`; naslednji commit začasno datoteko odstrani.
+To potrjuje zaznavanje napake v CI. Blokado združevanja zagotovi šele zgornja
+nastavitev zaščite veje.
 
 ### Namestitev
 
